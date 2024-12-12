@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Management System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        .container {
+            width: 90%;
+            margin: auto;
+            overflow: hidden;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        table th {
+            background-color: #333;
+            color: white;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #333;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Task Management System</h1>
+        <div>
+            <h3>Create Task</h3>
+            <div class="form-group">
+                <label for="title">Title</label>
+                <input type="text" id="title" placeholder="Enter task title">
+            </div>
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" placeholder="Enter task description"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="due_date">Due Date</label>
+                <input type="date" id="due_date">
+            </div>
+            <button id="create-task">Create Task</button>
+        </div>
+        <hr>
+        <h3>Task List</h3>
+        <table id="task-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Title</th>
+                    <th>Description</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+    <script>
+        const apiBase = 'http://127.0.0.1:5000/tasks';
+
+        async function fetchTasks() {
+            const response = await fetch(apiBase);
+            const tasks = await response.json();
+            const tbody = document.querySelector('#task-table tbody');
+            tbody.innerHTML = '';
+            tasks.forEach(task => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${task.id}</td>
+                    <td>${task.title}</td>
+                    <td>${task.description}</td>
+                    <td>${task.due_date}</td>
+                    <td>${task.status}</td>
+                    <td>
+                        <button onclick="completeTask(${task.id})">Complete</button>
+                        <button onclick="deleteTask(${task.id})">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        async function createTask() {
+            const title = document.getElementById('title').value;
+            const description = document.getElementById('description').value;
+            const due_date = document.getElementById('due_date').value;
+
+            const response = await fetch(apiBase, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ title, description, due_date })
+            });
+            if (response.ok) {
+                fetchTasks();
+            } else {
+                alert('Error creating task');
+            }
+        }
+
+        async function deleteTask(id) {
+            const response = await fetch(`${apiBase}/${id}`, {
+                method: 'DELETE'
+            });
+            if (response.ok) {
+                fetchTasks();
+            } else {
+                alert('Error deleting task');
+            }
+        }
+
+        async function completeTask(id) {
+            const response = await fetch(`${apiBase}/${id}/complete`, {
+                method: 'PATCH'
+            });
+            if (response.ok) {
+                fetchTasks();
+            } else {
+                alert('Error completing task');
+            }
+        }
+
+        document.getElementById('create-task').addEventListener('click', createTask);
+
+        fetchTasks();
+    </script>
+</body>
+</html>
